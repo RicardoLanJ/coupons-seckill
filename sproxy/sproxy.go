@@ -8,20 +8,42 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/go-redis/redis"
 )
 
 type User struct {
-	Id 		   int `json:"-" orm:"id"`
+	Id 		   int     `json:"-" orm:"id"`
     UserName   string  `json:"username" orm:"username"`
     PassWord   string  `json:"password" orm:"password"` 
     Kind       int     `json:"kind,omitempty" orm:"kind"`  
 }
 
+type myClaims struct {
+	UserName   string   `json:"username"`
+	Kind       int     `json:"kind"`
+    jwt.StandardClaims
+}
+
+var RedisClient *redis.Client
 var db *sql.DB
 var log = logrus.New()
 
+const (
+	scretKey = "konosuba"
+)
+
 func init() {
 	db, _ = initConnPool()
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		Password: "",
+		DB: 0,
+	})
+	_, err := RedisClient.Ping().Result()
+	if err != nil {
+		log.Fatal("connnect redis fail")
+	}
 }
 
 func main() {
@@ -37,6 +59,31 @@ func main() {
 	router.Run()
 }
 
+func makeToken(username string, kind int) string {
+	token := jwt.New(jwt.SigningMethodHS256)
+    claims := make(jwt.MapClaims)
+
+    claims["Username"] = username
+	claims["Kind"] = kind
+
+    token.Claims = claims
+    tokenString, _ := token.SignedString([]byte(scretKey))
+    return tokenString
+}
+
+func parseToken(token string) (*myClaims, error) {
+	jwtToken, err := jwt.ParseWithClaims(token, &myClaims{}, func(token *jwt.Token) (i interface{}, e error) {
+		return []byte(scretKey), nil
+	})
+	if err == nil && jwtToken != nil {
+		if claim, ok := jwtToken.Claims.(*myClaims); ok && jwtToken.Valid {
+			return claim, nil
+		}
+	}
+	return nil, err
+}
+
+
 func Userlogin(c *gin.Context) {
 	var user User
 	if err := c.BindJSON(&user); err != nil {
@@ -44,7 +91,8 @@ func Userlogin(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"kind":"0","errMsg":"json format wrong!"})
 		return
 	}
-	var dbpassword, dbkind string
+	var dbpassword string
+	var dbkind int
 	result := db.QueryRow("select password,kind from users where username=?", user.UserName)
 	if err := result.Scan(&dbpassword, &dbkind); err != nil {
 		if err == sql.ErrNoRows {
@@ -58,7 +106,20 @@ func Userlogin(c *gin.Context) {
 		log.WithFields(logrus.Fields{
 			"username": user.UserName,
 			"kind" : dbkind,
-		  }).Info("login success")
+		}).Info("login success")
+		token := makeToken(user.UserName, dbkind)
+		err := RedisClient.Set(user.UserName, token, 0).Err()
+		fmt.Println(RedisClient.Get(user.UserName).Result())
+		if err != nil {
+			log.Fatal("can not save token to redis")
+		}
+		c.Header("Authorization", token)
+		c.JSON(http.StatusOK, gin.H{"kind":dbkind,"errMsg":""})
+		// fmt.Println(t)  // test 
+		// tt, err := parseToken(t)
+		// fmt.Println(tt, err)
+		// fmt.Println(tt.UserName, tt.Kind)
+		
 	} else {
 		c.JSON(http.StatusOK, gin.H{"kind":"0","errMsg":"password not correct!"})
 	}
