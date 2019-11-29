@@ -14,5 +14,6 @@ CREATE TABLE Coupons (
     coupons varchar(60),
     amount int,
     `left` int,
+    stock int,
     description varchar(60)
 );

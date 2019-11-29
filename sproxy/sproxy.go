@@ -19,6 +19,13 @@ type User struct {
     Kind       int     `json:"kind,omitempty" orm:"kind"`  
 }
 
+type Coupon struct {
+	Name string `json:"name"`
+	Amount int `json:"amount"`
+	Description string `json:"description"`
+	Stock int `json:"stock"`
+}
+
 type myClaims struct {
 	UserName   string   `json:"username"`
 	Kind       int     `json:"kind"`
@@ -61,9 +68,40 @@ func main() {
 
 func addCoupons(c *gin.Context) {
 	Pusername := c.Param("username")
-	username := c.MustGet("username")
-	kind := c.MustGet("kind")
-	fmt.Println(Pusername, username, kind)
+	username := c.MustGet("username").(string)
+	kind := c.MustGet("kind").(int)
+	//fmt.Println(Pusername, username, kind) //test
+	if kind == 0 || Pusername != username {
+		c.JSON(http.StatusOK, gin.H{"errMsg":"you have no authority"})
+		return
+	}
+	var coupon Coupon
+	if err := c.BindJSON(&coupon); err != nil {
+		log.Error(err)
+		c.JSON(http.StatusOK, gin.H{"errMsg":"json format wrong!"})
+		return
+	}
+	if err := RedisClient.SAdd(username, coupon.Name).Err(); err != nil {
+		log.Fatal(err)
+	}
+	if err := RedisClient.Set(coupon.Name, coupon.Amount, 0).Err(); err != nil {
+		log.Fatal(err)
+	}
+	// all, err := RedisClient.SMembers(username).Result()
+	// if err != nil {
+    //     log.Fatal(err)
+	// }
+	// val, err := RedisClient.Get(coupon.Name).Result()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println("key", val)
+	// fmt.Println("All member: ", all)
+	insertCouponScript := "INSERT INTO coupons(username, coupons, amount, `left`, stock, description) values(?,?,?,?,?,?)"
+	_, err := db.Exec(insertCouponScript, username, coupon.Name, coupon.Amount, coupon.Amount, coupon.Stock, coupon.Description)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func Auth() gin.HandlerFunc { 
@@ -138,11 +176,11 @@ func Userlogin(c *gin.Context) {
 			"kind" : dbkind,
 		}).Info("login success")
 		token := makeToken(user.UserName, dbkind)
-		err := RedisClient.Set(user.UserName, token, 0).Err()
-		//fmt.Println(RedisClient.Get(user.UserName).Result())
-		if err != nil {
-			log.Fatal("can not save token to redis")
-		}
+		// err := RedisClient.Set(user.UserName, token, 0).Err()
+		// //fmt.Println(RedisClient.Get(user.UserName).Result())
+		// if err != nil {
+		// 	log.Fatal("can not save token to redis")
+		// }
 		c.Header("Authorization", token)
 		c.JSON(http.StatusOK, gin.H{"kind":dbkind,"errMsg":""})
 		// fmt.Println(t)  // test 
