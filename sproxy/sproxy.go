@@ -10,6 +10,7 @@ import (
 	"os"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis"
+	"strconv"
 )
 
 type User struct {
@@ -22,9 +23,11 @@ type User struct {
 type Coupon struct {
 	Name string `json:"name"`
 	Amount int `json:"amount"`
+	Left int `json:"left,omitempty"`
 	Description string `json:"description"`
 	Stock int `json:"stock"`
 }
+
 
 type myClaims struct {
 	UserName   string   `json:"username"`
@@ -62,8 +65,50 @@ func main() {
 	router.POST("/api/users", registerUser)
 	router.POST("/api/auth", Userlogin)
 	router.POST("/api/users/:username/coupons", Auth(), addCoupons)
+	router.GET("/api/users/:username/coupons", Auth(), getCoupons)
 
 	router.Run()
+}
+
+//type Pages []Coupon
+func getCoupons(c *gin.Context) {
+	page := c.Query("page")
+	Pusername := c.Param("username")
+	username := c.MustGet("username").(string)
+	kind := c.MustGet("kind").(int)
+	if kind == 0 || Pusername != username {
+		c.JSON(http.StatusOK, gin.H{"errMsg":"you have no authority"})
+		return
+	}
+	all, err := RedisClient.SMembers(username).Result()
+	if err != nil {
+        log.Fatal(err)
+	}
+	fmt.Println(all, page)
+	var allCoupon = []Coupon{}
+	for _, v := range all {
+		info, err := RedisClient.HGetAll(v + "-info").Result()
+		fmt.Println(v)
+		if err != nil {
+			log.Error("hget wrong")
+			log.Fatal(err)
+		}
+		left, err := RedisClient.Get(v).Result()
+		if err != nil {
+			log.Fatal(err)
+		}
+		amount, _ := strconv.Atoi(info["amount"])
+		intleft, _ := strconv.Atoi(left)
+		stock, _ := strconv.Atoi(info["stock"])
+		allCoupon = append(allCoupon, Coupon{
+			v, //coupon name
+			amount,
+			intleft,
+			info["description"],
+			stock,
+		})
+	}
+	c.JSON(http.StatusOK, allCoupon)
 }
 
 func addCoupons(c *gin.Context) {
@@ -87,6 +132,20 @@ func addCoupons(c *gin.Context) {
 	if err := RedisClient.Set(coupon.Name, coupon.Amount, 0).Err(); err != nil {
 		log.Fatal(err)
 	}
+	err := RedisClient.HMSet(coupon.Name + "-info", map[string]interface{}{
+		"stock": coupon.Stock,
+		"description":coupon.Description,
+		"amount": coupon.Amount,
+		}).Err();
+	if err != nil {
+		log.Fatal(err)
+	}
+	// if err := RedisClient.HSet(coupon.Name + "-info", "description", coupon.Description).Err(); err != nil {
+	// 	log.Fatal(err)
+	// }
+	// if err := RedisClient.HSet(coupon.Name + "-info", "amount", coupon.Amount).Err(); err != nil {
+	// 	log.Fatal(err)
+	// }
 	// all, err := RedisClient.SMembers(username).Result()
 	// if err != nil {
     //     log.Fatal(err)
@@ -98,10 +157,11 @@ func addCoupons(c *gin.Context) {
 	// fmt.Println("key", val)
 	// fmt.Println("All member: ", all)
 	insertCouponScript := "INSERT INTO coupons(username, coupons, amount, `left`, stock, description) values(?,?,?,?,?,?)"
-	_, err := db.Exec(insertCouponScript, username, coupon.Name, coupon.Amount, coupon.Amount, coupon.Stock, coupon.Description)
+	_ , err = db.Exec(insertCouponScript, username, coupon.Name, coupon.Amount, coupon.Amount, coupon.Stock, coupon.Description)
 	if err != nil {
 		log.Fatal(err)
 	}
+	c.JSON(http.StatusOK, gin.H{"errMsg":""})
 }
 
 func Auth() gin.HandlerFunc { 
