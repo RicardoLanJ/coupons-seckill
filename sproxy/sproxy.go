@@ -54,9 +54,39 @@ func main() {
 
 	router.POST("/api/users", registerUser)
 	router.POST("/api/auth", Userlogin)
-
+	router.POST("/api/users/:username/coupons", Auth(), addCoupons)
 
 	router.Run()
+}
+
+func addCoupons(c *gin.Context) {
+	Pusername := c.Param("username")
+	username := c.MustGet("username")
+	kind := c.MustGet("kind")
+	fmt.Println(Pusername, username, kind)
+}
+
+func Auth() gin.HandlerFunc { 
+	return func(context *gin.Context) {
+		authToken := context.Request.Header.Get("Authorization")
+		if authToken == "" {
+			context.Abort()
+			log.Info("request have no auth header")
+			context.JSON(http.StatusOK, gin.H{"errMsg":"request have no auth header"})
+			return
+		}
+		claim, err := parseToken(authToken)
+		if err != nil {
+			context.Abort()
+			log.Fatal("something wrong with parse")
+		}
+		username := claim.UserName
+		kind := claim.Kind
+		//RedisClient.Get(user.UserName).Result() // no need, must exist ^ ^
+		context.Set("username", username)
+		context.Set("kind", kind)
+		context.Next()
+	}
 }
 
 func makeToken(username string, kind int) string {
@@ -109,7 +139,7 @@ func Userlogin(c *gin.Context) {
 		}).Info("login success")
 		token := makeToken(user.UserName, dbkind)
 		err := RedisClient.Set(user.UserName, token, 0).Err()
-		fmt.Println(RedisClient.Get(user.UserName).Result())
+		//fmt.Println(RedisClient.Get(user.UserName).Result())
 		if err != nil {
 			log.Fatal("can not save token to redis")
 		}
