@@ -60,7 +60,7 @@ func main() {
 	fp := initlogger()
 	defer fp.Close()
 
-	router := gin.Default()
+	router := gin.Default()  //debug mode!!! need to modify
 
 	router.POST("/api/users", registerUser)
 	router.POST("/api/auth", Userlogin)
@@ -70,13 +70,14 @@ func main() {
 	router.Run()
 }
 
+
 //type Pages []Coupon
 func getCoupons(c *gin.Context) {
 	page := c.Query("page")
 	Pusername := c.Param("username")
 	username := c.MustGet("username").(string)
 	kind := c.MustGet("kind").(int)
-	if kind == 0 || Pusername != username {
+	if kind == 0 && Pusername != username {
 		c.JSON(http.StatusOK, gin.H{"errMsg":"you have no authority"})
 		return
 	}
@@ -99,6 +100,10 @@ func getCoupons(c *gin.Context) {
 		}
 		amount, _ := strconv.Atoi(info["amount"])
 		intleft, _ := strconv.Atoi(left)
+		if kind == 0 {
+			amount = 1
+			intleft = 1
+		}
 		stock, _ := strconv.Atoi(info["stock"])
 		allCoupon = append(allCoupon, Coupon{
 			v, //coupon name
