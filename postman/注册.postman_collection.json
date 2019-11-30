@@ -1,0 +1,245 @@
+{
+	"info": {
+		"_postman_id": "41262bdf-e8d8-42b7-89a3-d38b6e4dd258",
+		"name": "注册",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\":\"绊爱\",\n\t\"password\":\"114514\",\n\t\"kind\":0\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/users?",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "绊爱",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "114514",
+							"disabled": true
+						},
+						{
+							"key": "kind",
+							"value": "0",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "1 Copy",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\":\"akuya\",\n\t\"password\":\"114514\",\n\t\"kind\":0\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/users?",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "绊爱",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "114514",
+							"disabled": true
+						},
+						{
+							"key": "kind",
+							"value": "0",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\":\"kizuma\",\n\t\"password\":\"123\",\n\t\"kind\":0\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/users?",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "绊爱",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "114514",
+							"disabled": true
+						},
+						{
+							"key": "kind",
+							"value": "0",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3 Copy",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\":\"kizuma1233\",\n\t\"password\":\"123\",\n\t\"kind\":0\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/users?",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "绊爱",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "114514",
+							"disabled": true
+						},
+						{
+							"key": "kind",
+							"value": "0",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "admin1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\":\"admin1\",\n\t\"password\":\"123\",\n\t\"kind\":1\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/users?",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "绊爱",
+							"disabled": true
+						},
+						{
+							"key": "password",
+							"value": "114514",
+							"disabled": true
+						},
+						{
+							"key": "kind",
+							"value": "0",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

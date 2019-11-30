@@ -1,0 +1,49 @@
+{
+	"info": {
+		"_postman_id": "9857ab8e-10f6-4129-ba5e-4e8adb287081",
+		"name": "获取优惠卷",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "login with auth Copy",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJLaW5kIjoxLCJVc2VybmFtZSI6ImFkbWluMSJ9.3ZyMrPtACdaxqQkf76yzpsHjFXquG9M382Areuzs-7o",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/users/admin1/coupons?page=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users",
+						"admin1",
+						"coupons"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

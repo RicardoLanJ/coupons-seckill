@@ -1,0 +1,88 @@
+{
+	"info": {
+		"_postman_id": "76b81763-00b1-4ce4-bcbf-2c74f6cf2018",
+		"name": "抢卷",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "sk1",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJLaW5kIjoxLCJVc2VybmFtZSI6ImFkbWluMSJ9.3ZyMrPtACdaxqQkf76yzpsHjFXquG9M382Areuzs-7o",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/users/admin1/coupons/duleisi?username=admin1&name=duleisi",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users",
+						"admin1",
+						"coupons",
+						"duleisi"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "admin1"
+						},
+						{
+							"key": "name",
+							"value": "duleisi"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sk1 Copy",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJLaW5kIjowLCJVc2VybmFtZSI6ImFrdXlhIn0.Qf_9CLpRuYig5KTwO3vKXJBDRTFqHn9Vti0xWrnXvLI",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/users/admin1/coupons/duleisi?username=admin1&name=duleisi",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users",
+						"admin1",
+						"coupons",
+						"duleisi"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "admin1"
+						},
+						{
+							"key": "name",
+							"value": "duleisi"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
