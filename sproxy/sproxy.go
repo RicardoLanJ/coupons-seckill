@@ -11,6 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-redis/redis"
 	"strconv"
+	"errors"
 )
 
 type User struct {
@@ -61,15 +62,81 @@ func main() {
 	defer fp.Close()
 
 	router := gin.Default()  //debug mode!!! need to modify
+	// gin.SetMode(gin.ReleaseMode)
+	// router := gin.New()
 
 	router.POST("/api/users", registerUser)
 	router.POST("/api/auth", Userlogin)
 	router.POST("/api/users/:username/coupons", Auth(), addCoupons)
 	router.GET("/api/users/:username/coupons", Auth(), getCoupons)
 
+	router.PATCH("/api/users/:username/coupons/:name", Auth(), secKillCoupons)
+
 	router.Run()
 }
 
+func optimisticLockSK(key, username string) error {
+	txf := func(tx *redis.Tx) error {
+		// get current value or zero
+		n, err := tx.Get(key).Int()
+		if err != nil && err != redis.Nil {
+			return err
+		}
+		isExist, err := tx.SIsMember(username, key).Result()
+		if err != nil && err != redis.Nil {
+			return err
+		}
+		if n == 0 || isExist {
+			return errors.New("can only get one")
+		}
+		// if n == 0?
+		// actual opperation (local in optimistic lock)
+		n--
+
+		// runs only if the watched keys remain unchanged
+		_, err = tx.Pipelined(func(pipe redis.Pipeliner) error {
+			// pipe handles the error case
+			pipe.Set(key, n, 0)
+			pipe.SAdd(username, key)
+			return nil
+		})
+		return err
+	}
+
+	for {
+		err := RedisClient.Watch(txf, key)
+		if err != redis.TxFailedErr {
+			return err
+		}
+		// optimistic lock lost
+	}
+	//return errors.New("increment reached maximum number of retries")
+}
+
+func secKillCoupons(c *gin.Context) {
+	//Busername := c.Param("username") // 没批用
+	couponname := c.Param("name")
+	username := c.MustGet("username").(string)
+	kind := c.MustGet("kind").(int)
+	if kind == 1 {
+		c.JSON(http.StatusOK, gin.H{"errMsg":"商家抢你妈呢"})
+		return
+	}
+	left, err := RedisClient.Get(couponname).Int()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if left == 0 {
+		c.JSON(http.StatusOK, gin.H{"errMsg":"snapped up"})
+		return
+	} else {
+		if err = optimisticLockSK(couponname, username); err != nil {
+			c.JSON(http.StatusOK, gin.H{"errMsg":err.Error()})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"errMsg":""})
+		}
+	}
+}
 
 //type Pages []Coupon
 func getCoupons(c *gin.Context) {
@@ -185,7 +252,7 @@ func Auth() gin.HandlerFunc {
 		}
 		username := claim.UserName
 		kind := claim.Kind
-		//RedisClient.Get(user.UserName).Result() // no need, must exist ^ ^
+		//RedisClient.Get(user.UserName).Result() // no need, must exist ^ ^ //dont do this !!!
 		context.Set("username", username)
 		context.Set("kind", kind)
 		context.Next()
