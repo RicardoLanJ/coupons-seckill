@@ -86,7 +86,10 @@ func optimisticLockSK(key, username string) error {
 		if err != nil && err != redis.Nil {
 			return err
 		}
-		if n == 0 || isExist {
+		if n == 0  {
+			return errors.New("snapped up")
+		}
+		if isExist {
 			return errors.New("can only get one")
 		}
 		// if n == 0?
@@ -127,11 +130,11 @@ func secKillCoupons(c *gin.Context) {
 		log.Fatal(err)
 	}
 	if left == 0 {
-		c.JSON(http.StatusNoContent, gin.H{"errMsg":"snapped up"})
+		c.JSON(http.StatusBadRequest, gin.H{"errMsg":"snapped up"})
 		return
 	} else {
 		if err = optimisticLockSK(couponname, username); err != nil {
-			c.JSON(http.StatusNoContent, gin.H{"errMsg":err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"errMsg":err.Error()})
 		} else {
 			c.JSON(http.StatusOK, gin.H{"errMsg":""})
 		}
@@ -140,23 +143,23 @@ func secKillCoupons(c *gin.Context) {
 
 //type Pages []Coupon
 func getCoupons(c *gin.Context) {
-	page := c.Query("page")
+	//page := c.Query("page")
 	Pusername := c.Param("username")
 	username := c.MustGet("username").(string)
 	kind := c.MustGet("kind").(int)
 	if kind == 0 && Pusername != username {
-		c.JSON(http.StatusUnauthorized, gin.H{"errMsg":"you have no authority"})
+		c.JSON(http.StatusUnauthorized, gin.H{"errMsg":"you have no authority", "data":make([]Coupon, 0)})
 		return
 	}
 	all, err := RedisClient.SMembers(username).Result()
 	if err != nil {
         log.Fatal(err)
 	}
-	fmt.Println(all, page)
+	//fmt.Println(all, page)
 	var allCoupon = []Coupon{}
 	for _, v := range all {
 		info, err := RedisClient.HGetAll(v + "-info").Result()
-		fmt.Println(v)
+		//fmt.Println(v)
 		if err != nil {
 			log.Error("hget wrong")
 			log.Fatal(err)
@@ -180,7 +183,7 @@ func getCoupons(c *gin.Context) {
 			stock,
 		})
 	}
-	c.JSON(http.StatusOK, allCoupon)
+	c.JSON(http.StatusOK, gin.H{"errMsg":"", "data":allCoupon})
 }
 
 func addCoupons(c *gin.Context) {
@@ -195,7 +198,7 @@ func addCoupons(c *gin.Context) {
 	var coupon Coupon
 	if err := c.BindJSON(&coupon); err != nil {
 		log.Error(err)
-		c.JSON(http.StatusNoContent, gin.H{"errMsg":"json format wrong!"})
+		c.JSON(http.StatusBadRequest, gin.H{"errMsg":"json format wrong!"})
 		return
 	}
 	if err := RedisClient.SAdd(username, coupon.Name).Err(); err != nil {
