@@ -119,7 +119,7 @@ func secKillCoupons(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	kind := c.MustGet("kind").(int)
 	if kind == 1 {
-		c.JSON(http.StatusOK, gin.H{"errMsg":"商家抢你妈呢"})
+		c.JSON(http.StatusUnauthorized, gin.H{"errMsg":"商家抢你妈呢"})
 		return
 	}
 	left, err := RedisClient.Get(couponname).Int()
@@ -127,11 +127,11 @@ func secKillCoupons(c *gin.Context) {
 		log.Fatal(err)
 	}
 	if left == 0 {
-		c.JSON(http.StatusOK, gin.H{"errMsg":"snapped up"})
+		c.JSON(http.StatusNoContent, gin.H{"errMsg":"snapped up"})
 		return
 	} else {
 		if err = optimisticLockSK(couponname, username); err != nil {
-			c.JSON(http.StatusOK, gin.H{"errMsg":err.Error()})
+			c.JSON(http.StatusNoContent, gin.H{"errMsg":err.Error()})
 		} else {
 			c.JSON(http.StatusOK, gin.H{"errMsg":""})
 		}
@@ -145,7 +145,7 @@ func getCoupons(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	kind := c.MustGet("kind").(int)
 	if kind == 0 && Pusername != username {
-		c.JSON(http.StatusOK, gin.H{"errMsg":"you have no authority"})
+		c.JSON(http.StatusUnauthorized, gin.H{"errMsg":"you have no authority"})
 		return
 	}
 	all, err := RedisClient.SMembers(username).Result()
@@ -189,13 +189,13 @@ func addCoupons(c *gin.Context) {
 	kind := c.MustGet("kind").(int)
 	//fmt.Println(Pusername, username, kind) //test
 	if kind == 0 || Pusername != username {
-		c.JSON(http.StatusOK, gin.H{"errMsg":"you have no authority"})
+		c.JSON(http.StatusUnauthorized, gin.H{"errMsg":"you have no authority"})
 		return
 	}
 	var coupon Coupon
 	if err := c.BindJSON(&coupon); err != nil {
 		log.Error(err)
-		c.JSON(http.StatusOK, gin.H{"errMsg":"json format wrong!"})
+		c.JSON(http.StatusNoContent, gin.H{"errMsg":"json format wrong!"})
 		return
 	}
 	if err := RedisClient.SAdd(username, coupon.Name).Err(); err != nil {
@@ -242,7 +242,7 @@ func Auth() gin.HandlerFunc {
 		if authToken == "" {
 			context.Abort()
 			log.Info("request have no auth header")
-			context.JSON(http.StatusOK, gin.H{"errMsg":"request have no auth header"})
+			context.JSON(http.StatusUnauthorized, gin.H{"errMsg":"request have no auth header"})
 			return
 		}
 		claim, err := parseToken(authToken)
@@ -288,7 +288,7 @@ func Userlogin(c *gin.Context) {
 	var user User
 	if err := c.BindJSON(&user); err != nil {
 		log.Error(err)
-		c.JSON(http.StatusOK, gin.H{"kind":"0","errMsg":"json format wrong!"})
+		c.JSON(http.StatusUnauthorized, gin.H{"kind":"0","errMsg":"json format wrong!"})
 		return
 	}
 	var dbpassword string
@@ -296,7 +296,7 @@ func Userlogin(c *gin.Context) {
 	result := db.QueryRow("select password,kind from users where username=?", user.UserName)
 	if err := result.Scan(&dbpassword, &dbkind); err != nil {
 		if err == sql.ErrNoRows {
-			c.JSON(http.StatusOK, gin.H{"kind":"0","errMsg":"user not exist!"})
+			c.JSON(http.StatusUnauthorized, gin.H{"kind":"0","errMsg":"user not exist!"})
 			return
 		}
 		log.Fatal(err)
@@ -321,7 +321,7 @@ func Userlogin(c *gin.Context) {
 		// fmt.Println(tt.UserName, tt.Kind)
 		
 	} else {
-		c.JSON(http.StatusOK, gin.H{"kind":"0","errMsg":"password not correct!"})
+		c.JSON(http.StatusUnauthorized, gin.H{"kind":"0","errMsg":"password not correct!"})
 	}
 }
 
