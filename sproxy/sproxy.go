@@ -136,7 +136,7 @@ func secKillCoupons(c *gin.Context) {
 		if err = optimisticLockSK(couponname, username); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"errMsg":err.Error()})
 		} else {
-			c.JSON(http.StatusOK, gin.H{"errMsg":""})
+			c.JSON(http.StatusCreated, gin.H{"errMsg":""})
 		}
 	}
 }
@@ -183,7 +183,12 @@ func getCoupons(c *gin.Context) {
 			stock,
 		})
 	}
-	c.JSON(http.StatusOK, gin.H{"errMsg":"", "data":allCoupon})
+	if len(allCoupon) > 0 {
+		c.JSON(http.StatusOK, gin.H{"errMsg":"", "data":allCoupon})
+	} else {
+		c.JSON(http.StatusNoContent, gin.H{"errMsg":"empty", "data":allCoupon})
+	}
+	
 }
 
 func addCoupons(c *gin.Context) {
@@ -236,7 +241,7 @@ func addCoupons(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.JSON(http.StatusOK, gin.H{"errMsg":""})
+	c.JSON(http.StatusCreated, gin.H{"errMsg":""})
 }
 
 func Auth() gin.HandlerFunc { 
@@ -362,8 +367,10 @@ func registerUser(c *gin.Context) {
 				"username": user.UserName,
 			  }).Info("User existed")
 			errMsg = "User existed"
+			c.JSON(http.StatusOK, gin.H{"errMsg":errMsg})
+			return
 	}
-	c.JSON(http.StatusOK, gin.H{"errMsg":errMsg})
+	c.JSON(http.StatusCreated, gin.H{"errMsg":errMsg})
 }
 
 func initConnPool() (*sql.DB, error) {
