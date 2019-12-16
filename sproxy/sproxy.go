@@ -18,7 +18,7 @@ type User struct {
 	Id 		   int     `json:"-" orm:"id"`
     UserName   string  `json:"username" orm:"username"`
     PassWord   string  `json:"password" orm:"password"` 
-    Kind       int     `json:"kind,omitempty" orm:"kind"`  
+    Kind       string     `json:"kind,omitempty" orm:"kind"`  
 }
 
 type Coupon struct {
@@ -301,6 +301,7 @@ func Userlogin(c *gin.Context) {
 	}
 	var dbpassword string
 	var dbkind int
+	var strkind string
 	result := db.QueryRow("select password,kind from users where username=?", user.UserName)
 	if err := result.Scan(&dbpassword, &dbkind); err != nil {
 		if err == sql.ErrNoRows {
@@ -309,6 +310,11 @@ func Userlogin(c *gin.Context) {
 		}
 		log.Fatal(err)
 		return
+	}
+	if dbkind == 0 {
+		strkind = "customer"
+	} else {
+		strkind = "saler"
 	}
 	if dbpassword == user.PassWord {
 		log.WithFields(logrus.Fields{
@@ -322,7 +328,7 @@ func Userlogin(c *gin.Context) {
 		// 	log.Fatal("can not save token to redis")
 		// }
 		c.Header("Authorization", token)
-		c.JSON(http.StatusOK, gin.H{"kind":dbkind,"errMsg":""})
+		c.JSON(http.StatusOK, gin.H{"kind":strkind,"errMsg":""})
 		// fmt.Println(t)  // test 
 		// tt, err := parseToken(t)
 		// fmt.Println(tt, err)
@@ -336,10 +342,16 @@ func Userlogin(c *gin.Context) {
 func registerUser(c *gin.Context) {
 	var user User
 	var temp string
+	var numkind int
 	if err := c.BindJSON(&user); err != nil {
 		log.Error(err)
 		c.JSON(http.StatusOK, gin.H{"kind":"0","errMsg":"json format wrong!"})
 		return
+	}
+	if user.Kind == "saler" {
+		numkind = 1
+	} else {
+		numkind = 0
 	}
 	err := db.QueryRow("SELECT username FROM users WHERE username=?", user.UserName).Scan(&temp)
 	errMsg := ""
@@ -356,7 +368,7 @@ func registerUser(c *gin.Context) {
 			// 	log.Fatal(err)
 			// }
 			// _, err = stmt.Exec(user.UserName, user.PassWord, user.Kind)
-			_, err := db.Exec(insertUserScript, user.UserName, user.PassWord, user.Kind)
+			_, err := db.Exec(insertUserScript, user.UserName, user.PassWord, numkind)
 			if err != nil {
 				log.Fatal(err)
 			}
