@@ -47,7 +47,7 @@ const (
 func init() {
 	db, _ = initConnPool()
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: "my_redis:6379",
 		Password: "",
 		DB: 0,
 	})
@@ -386,7 +386,7 @@ func registerUser(c *gin.Context) {
 }
 
 func initConnPool() (*sql.DB, error) {
-	linkParam := "root:admin@tcp(127.0.0.1:3306)/msxt?charset=utf8"
+	linkParam := "root:admin@tcp(my_mysql:3306)/msxt?charset=utf8"
 	maxIdleConns := 1000
 	maxOpenConns := 2000
 	db, err := sql.Open("mysql", linkParam) 
