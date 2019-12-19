@@ -130,11 +130,11 @@ func secKillCoupons(c *gin.Context) {
 		log.Fatal(err)
 	}
 	if left == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"errMsg":"snapped up"})
+		c.JSON(http.StatusNoContent, gin.H{"errMsg":"snapped up"})
 		return
 	} else {
 		if err = optimisticLockSK(couponname, username); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"errMsg":err.Error()})
+			c.JSON(http.StatusNoContent, gin.H{"errMsg":err.Error()})
 		} else {
 			c.JSON(http.StatusCreated, gin.H{"errMsg":""})
 		}
