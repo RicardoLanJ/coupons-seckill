@@ -62,8 +62,8 @@ func main() {
 	defer fp.Close()
 
 	router := gin.Default()  //debug mode!!! need to modify
-	// gin.SetMode(gin.ReleaseMode)
-	// router := gin.New()
+	//gin.SetMode(gin.ReleaseMode)
+	//router := gin.New()
 
 	router.POST("/api/users", registerUser)
 	router.POST("/api/auth", Userlogin)
@@ -147,11 +147,11 @@ func getCoupons(c *gin.Context) {
 	Pusername := c.Param("username")
 	username := c.MustGet("username").(string)
 	kind := c.MustGet("kind").(int)
-	if kind == 0 && Pusername != username {
+	if false && kind == 0 && Pusername != username {
 		c.JSON(http.StatusUnauthorized, gin.H{"errMsg":"you have no authority", "data":make([]Coupon, 0)})
 		return
 	}
-	all, err := RedisClient.SMembers(username).Result()
+	all, err := RedisClient.SMembers(Pusername).Result()
 	if err != nil {
         log.Fatal(err)
 	}
@@ -308,7 +308,8 @@ func Userlogin(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"kind":"0","errMsg":"user not exist!"})
 			return
 		}
-		log.Fatal(err)
+		log.Error(err)
+         	c.JSON(400, gin.H{"errMsg":err})
 		return
 	}
 	if dbkind == 0 {
@@ -370,10 +371,12 @@ func registerUser(c *gin.Context) {
 			// _, err = stmt.Exec(user.UserName, user.PassWord, user.Kind)
 			_, err := db.Exec(insertUserScript, user.UserName, user.PassWord, numkind)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(err)
+			        c.JSON(400, gin.H{"errMsg":err})
 			}
 		case err != nil:
-			log.Fatal(err)
+			log.Error(err)
+			c.JSON(400, gin.H{"errMsg":err})
 		default:
 			log.WithFields(logrus.Fields{
 				"username": user.UserName,
